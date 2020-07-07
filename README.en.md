@@ -1,5 +1,5 @@
 # meet-attendance
-*Read this in Portuguese: [Português](README.pt.md)*
+*Read this in Portuguese: [Português](README.md)*
 
 Project to help teachers knowing which students were present during a whole online class.
 
