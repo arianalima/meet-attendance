@@ -1,12 +1,12 @@
 # meet-attendance
-*Read this in Portuguese: [Português](README.pt.md)*
+*Read this in English: [English](README.en.md)*
 
-Project to help teachers knowing which students were present during a whole online class.
+Projeto para auxiliar professores a saberem quais estudantes estavam presentes durante toda uma aula online.
 
-Some teachers use [Google Meet](https://meet.google.com/) for online classes. They need to make a roll call a few times during class and then see which students were present at all or most of the checks.
-This project has an assumption of using [Meet Attendance](https://chrome.google.com/webstore/detail/meet-attendance/nenibigflkdikhamlnekfppbganmojlg) add-on during the online class.
+Alguns professores utilizam [Google Meet](https://meet.google.com/) para aulas online. Eles precisam fazer a chamada dos alunos algumas vezes durante a aula e, após o término, verificar quais alunos estavam presentes em todas a chamadas ou na maioria delas.
+Esse projeto assume que a extensão [Meet Attendance](https://chrome.google.com/webstore/detail/meet-attendance/nenibigflkdikhamlnekfppbganmojlg) é utilizada durante as aulas online.
 
 ## Tutorial
-- After generating the spreadsheet with [Meet Attendance](https://chrome.google.com/webstore/detail/meet-attendance/nenibigflkdikhamlnekfppbganmojlg) add-on, download it in `.csv` format:
+- Após gerar a planilha com a extensão [Meet Attendance](https://chrome.google.com/webstore/detail/meet-attendance/nenibigflkdikhamlnekfppbganmojlg), faça o download no formato `.csv`:
 
 ![Screenshot](spreadsheet.gif)
