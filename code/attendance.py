@@ -53,8 +53,5 @@ def get_teachers():
     return teachers
 
 
-# print(set(get_teachers().Nicknames).union(set(get_teachers().Nomes)))
-# if 'Antonio Ferreira' in list(get_teachers().Nicknames&get_teachers().Nomes):
-#     print("oi")
 attendance('Meet Attendance - Attendance.csv')
 
