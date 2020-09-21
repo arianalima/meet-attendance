@@ -1,4 +1,6 @@
 from __future__ import print_function
+
+import csv
 import pickle
 import os.path
 from apiclient import errors
@@ -25,8 +27,8 @@ def get_sheets_service():
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('token.pickle'):
-        with open('..\\credentials\\token.pickle', 'rb') as token:
+    if os.path.exists('token.pickle-sheets'):
+        with open('..\\credentials\\token.pickle-sheets', 'rb') as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
@@ -37,7 +39,7 @@ def get_sheets_service():
                 '..\\credentials\\client_secret.json', SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('..\\credentials\\token.pickle', 'wb') as token:
+        with open('..\\credentials\\token.pickle-sheets', 'wb') as token:
             pickle.dump(creds, token)
 
     return build('sheets', 'v4', credentials=creds)
@@ -51,8 +53,8 @@ def get_drive_service():
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('..\\credentials\\token.pickle'):
-        with open('..\\credentials\\token.pickle', 'rb') as token:
+    if os.path.exists('token.pickle-drive'):
+        with open('..\\credentials\\token.pickle-drive', 'rb') as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
@@ -63,13 +65,13 @@ def get_drive_service():
                 '..\\credentials\\credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('..\\credentials\\token.pickle', 'wb') as token:
+        with open('..\\credentials\\token.pickle-drive', 'wb') as token:
             pickle.dump(creds, token)
 
     return build('drive', 'v3', credentials=creds)
 
 
-def apply_id(service):
+def apply_id(service, spreadsheet_id):
     # Call the Sheets API
     sheet = service.spreadsheets()
     my_range = [{
@@ -92,15 +94,15 @@ def apply_id(service):
         'data': data
     }
     result = sheet.values().batchUpdate(
-        spreadsheetId=SPREADSHEET_ID, body=body).execute()
+        spreadsheetId=spreadsheet_id, body=body).execute()
     print('{0} cells updated.'.format(result.get('totalUpdatedCells')))
 
 
-def get_values(service):
+def get_sheet_values(service, spreadsheet_id, spreadsheet_range):
     # Call the Sheets API
     sheet = service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=SPREADSHEET_ID,
-                                range=RANGE_NAME).execute()
+    result = sheet.values().get(spreadsheetId=spreadsheet_id,
+                                range=spreadsheet_range).execute()
     values = result.get('values', [])
 
     if not values:
@@ -109,6 +111,19 @@ def get_values(service):
         for row in values:
             # Print columns A and E, which correspond to indices 0 and 4.
             print(row)
+
+
+def download_sheet_to_csv(service, spreadsheet_id, spreadsheet_range):
+    result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=spreadsheet_range).execute()
+    output_file = f'{spreadsheet_range}.csv'
+
+    with open(output_file, 'w') as f:
+        writer = csv.writer(f)
+        writer.writerows(result.get('values'))
+
+    f.close()
+
+    print(f'Successfully downloaded {spreadsheet_range}.csv')
 
 
 def get_files(service):
@@ -124,6 +139,26 @@ def get_files(service):
             print(u'{0} ({1})'.format(item['name'], item['id']))
 
 
+def get_sub_sheets(service, parent_folder_id):
+    page_token = None
+    files = []
+    while True:
+        response = service.files().list(q="(mimeType='application/vnd.google-apps.spreadsheet'"
+                                          "or mimeType='application/vnd.oasis.opendocument.spreadsheet'"
+                                          "or mimeType='application/vnd.ms-excel'"
+                                          "or mimeType=' application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')"
+                                          "and '%s' in parents" % parent_folder_id,
+                                              spaces='drive',
+                                              fields='nextPageToken, files(id, name)',
+                                              pageToken=page_token).execute()
+        for file in response.get('files', []):
+            files.append((file.get('name'), file.get('id')))
+            print('Found files: %s (%s)' % (file.get('name'), file.get('id')))
+        page_token = response.get('nextPageToken', None)
+        if page_token is None:
+            return files
+
+
 def get_folders(service, folder_id):
     """Print files belonging to a folder.
 
@@ -132,6 +167,7 @@ def get_folders(service, folder_id):
         folder_id: ID of the folder to print files from.
     """
     page_token = None
+    folders = []
     while True:
         response = service.files().list(q="mimeType='application/vnd.google-apps.folder' "
                                           "and '%s' in parents" % folder_id,
@@ -139,18 +175,23 @@ def get_folders(service, folder_id):
                                               fields='nextPageToken, files(id, name)',
                                               pageToken=page_token).execute()
         for file in response.get('files', []):
+            folders.append((file.get('name'), file.get('id')))
             print('Found folder: %s (%s)' % (file.get('name'), file.get('id')))
         page_token = response.get('nextPageToken', None)
         if page_token is None:
-            break
+            return folders
 
 
 if __name__ == '__main__':
-    # service = get_sheets_service()
     # get_values(service)
     # apply_id(service)
-    service = get_drive_service()
+    sheet_service = get_sheets_service()
+    drive_service = get_drive_service()
+    root = get_folders(drive_service, '1zluJksEAjLJm0WUSCPdCPsOWLrJygLlT')
+    class1 = get_folders(drive_service, '15NLJ_0Zp_6Bv2S2aXC6adrL_0jQJHkYi')
+    print(class1[0])
+    attendance1 = get_sub_sheets(drive_service, class1[0][1])
+    print(attendance1)
+    download_sheet_to_csv(sheet_service, attendance1[0][1], 'Matemática')
     # get_files(service)
-    get_folders(service, '1zluJksEAjLJm0WUSCPdCPsOWLrJygLlT')
-    get_folders(service, '15NLJ_0Zp_6Bv2S2aXC6adrL_0jQJHkYi')
 
